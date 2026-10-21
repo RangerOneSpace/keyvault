@@ -1,0 +1,60 @@
+{
+  "name": "@rangerone/keyvault",
+  "version": "1.6.0",
+  "description": "A local, encrypted API key vault that Claude, Codex, Cursor and other AI tools can use (via MCP) without ever seeing your keys.",
+  "type": "module",
+  "bin": {
+    "keyvault": "bin/keyvault.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "ui",
+    "data",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node bin/keyvault.js",
+    "test": "node --test",
+    "test:e2e": "playwright test",
+    "test:all": "node --test && playwright test",
+    "build:exe": "node scripts/build-exe.mjs",
+    "readme-art": "node scripts/readme-art.mjs"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.2.5",
+    "@playwright/test": "~1.56.0",
+    "esbuild": "^0.28.2",
+    "pe-library": "^2.0.1",
+    "postject": "^1.0.0-alpha.6",
+    "resedit": "^3.1.0"
+  },
+  "keywords": [
+    "api-keys",
+    "secrets",
+    "vault",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "openai",
+    "llm",
+    "local-first",
+    "encryption"
+  ],
+  "author": "Ranger One",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RangerOneSpace/keyvault.git"
+  },
+  "homepage": "https://github.com/RangerOneSpace/keyvault#readme",
+  "bugs": {
+    "url": "https://github.com/RangerOneSpace/keyvault/issues"
+  }
+}

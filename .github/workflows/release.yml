@@ -1,0 +1,37 @@
+name: Release
+
+# Push a tag like v1.0.1 to build KeyVault for Windows, macOS and Linux and
+# attach the executables (with SHA-256 checksums) to a GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            file: dist/KeyVault.exe
+          - os: macos-latest
+            file: dist/keyvault-mac-arm64
+          - os: ubuntu-latest
+            file: dist/keyvault-linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm test
+      - run: node scripts/build-exe.mjs
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ matrix.file }}
+            ${{ matrix.file }}.sha256

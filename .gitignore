@@ -1,0 +1,12 @@
+node_modules/
+test-results/
+playwright-report/
+.dev-vault/
+.keyvault/
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
+build/
+dist/

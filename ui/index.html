@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="referrer" content="no-referrer">
+<title>KeyVault · Ranger One</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<div class="scanlines" aria-hidden="true"></div>
+
+<div id="boot" class="boot">Booting KeyVault…</div>
+
+<!-- Create / unlock -->
+<main id="gate" class="gate" hidden>
+  <div class="gate-inner">
+    <div class="gate-hero">
+      <div class="lockup lockup-lg">
+        <div class="r1" data-size="lg" data-anim="loop" aria-hidden="true"></div>
+        <div class="lockup-divider"></div>
+        <div>
+          <div class="wordmark">KeyVault</div>
+          <div class="wordmark-sub">A Ranger One product<span class="cursor"></span></div>
+        </div>
+      </div>
+      <p class="gate-tagline"><b>&gt;</b> secure key infrastructure for teams that ship with AI</p>
+    </div>
+    <form id="gate-form" class="card gate-card" autocomplete="off" novalidate>
+      <h1 id="gate-title">Unlock your vault</h1>
+      <p id="gate-sub" class="muted"></p>
+      <p id="gate-info" class="note" hidden></p>
+      <label class="field"><span>Master password</span><input type="password" id="pw" autocomplete="current-password"></label>
+      <label class="field" id="pw2-wrap" hidden><span>Confirm master password</span><input type="password" id="pw2" autocomplete="new-password"></label>
+      <label class="field" id="orgs-wrap" hidden>
+        <span>Your organisations <em>(optional)</em></span>
+        <input type="text" id="orgs-init" placeholder="e.g. Acme Ltd, Acme Labs, Acme Energy">
+        <small class="hint">Separate with commas. You can add, rename and recolour them later.</small>
+      </label>
+      <p id="gate-err" class="err" role="alert" hidden></p>
+      <button type="submit" class="btn primary block" id="gate-submit">Unlock</button>
+      <div id="gate-pass" class="gate-pass" hidden>
+        <p><b class="pass-dot" aria-hidden="true"></b><span id="gate-pass-text"></span></p>
+        <button type="button" class="btn ghost sm glow-stop" id="gate-pass-end">End the pass and lock everything</button>
+      </div>
+    </form>
+    <div class="gate-links"><button type="button" class="link" id="btn-restore-gate">Restore from a backup file</button></div>
+    <p class="fineprint">Your keys are encrypted with AES-256 and stored only on this computer. Nothing is sent anywhere. If you forget your master password, your keys cannot be recovered.</p>
+    <nav class="brand-links" aria-label="Ranger One">
+      <a href="https://rangerone.io" target="_blank" rel="noopener noreferrer">rangerone.io</a>
+      <a href="mailto:support@rangerone.io">support@rangerone.io</a>
+      <a href="https://github.com/RangerOneSpace/keyvault" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </nav>
+  </div>
+</main>
+
+<!-- Session ended -->
+<main id="expired" class="gate" hidden>
+  <div class="gate-inner">
+    <div class="gate-hero">
+      <div class="lockup lockup-lg">
+        <div class="r1" data-size="lg" data-anim="loop" aria-hidden="true"></div>
+        <div class="lockup-divider"></div>
+        <div><div class="wordmark">KeyVault</div><div class="wordmark-sub">A Ranger One product<span class="cursor"></span></div></div>
+      </div>
+    </div>
+    <div class="card gate-card">
+      <h1 id="expired-title">This window is no longer connected</h1>
+      <p class="muted" id="expired-body">KeyVault was restarted, or this link has already been used. For your security each browser window needs a fresh link.</p>
+      <p>Double-click <strong>KeyVault.exe</strong>, or run this in a terminal:</p>
+      <pre class="code">keyvault</pre>
+    </div>
+  </div>
+</main>
+
+<!-- App -->
+<div id="app" hidden>
+  <header class="topbar">
+    <a class="lockup lockup-sm" href="https://rangerone.io" target="_blank" rel="noopener noreferrer" title="Ranger One">
+      <div class="r1" data-size="sm" data-anim="once" aria-hidden="true"></div>
+      <div class="lockup-divider"></div>
+      <div><div class="wordmark">KeyVault</div><div class="wordmark-sub">by Ranger One</div></div>
+    </a>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button type="button" role="tab" class="tab" id="tab-keys" aria-selected="true">Keys</button>
+      <button type="button" role="tab" class="tab" id="tab-projects" aria-selected="false">Projects</button>
+      <button type="button" role="tab" class="tab" id="tab-apps" aria-selected="false">Apps</button>
+      <button type="button" role="tab" class="tab" id="tab-services" aria-selected="false">Services</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="top-actions">
+      <button type="button" class="btn ghost" id="btn-connect">Connect AI</button>
+      <button type="button" class="btn ghost" id="btn-activity">Activity</button>
+      <button type="button" class="btn ghost" id="btn-settings">Settings</button>
+      <button type="button" class="btn ghost" id="btn-pass" title="Keep KeyVault available to your AI tools while you are away">Agent pass</button>
+      <button type="button" class="btn ghost" id="btn-lock">Lock</button>
+    </div>
+  </header>
+  <div id="as-banner" class="as-banner" role="region" aria-label="Start with your computer" hidden>
+    <p><strong>Start KeyVault when you sign in?</strong> <span class="muted">It runs in the background from the moment your computer starts, so your AI tools and this page just work. The vault stays locked until you unlock it.</span></p>
+    <div class="btn-row"><button type="button" class="btn ghost sm glow-start" id="as-yes">Turn on</button><button type="button" class="btn ghost sm" id="as-no">Not now</button></div>
+  </div>
+
+  <section id="view-keys" class="layout">
+    <aside class="sidebar" aria-label="Filters">
+      <section><h2>Organisations</h2><ul id="nav-orgs"></ul><button type="button" class="link small" id="btn-orgs">Manage organisations</button></section>
+      <section><h2>Type</h2><ul id="nav-types"></ul></section>
+      <section><h2>Status</h2><ul id="nav-status"></ul></section>
+    </aside>
+    <main class="main">
+      <div class="main-head">
+        <div>
+          <h1 id="keys-title">All keys</h1>
+          <p class="muted small">Click a hidden key to show it for 20 seconds. Copied keys are cleared from the clipboard after 30 seconds.</p>
+        </div>
+        <div class="head-actions">
+          <input type="search" id="search" placeholder="Search keys" aria-label="Search keys">
+          <button type="button" class="btn primary" id="btn-add">Add key</button>
+        </div>
+      </div>
+      <div id="stats" class="stats"></div>
+      <div id="key-list" class="list"></div>
+    </main>
+  </section>
+
+  <section id="view-projects" class="projects" hidden>
+    <div class="main-head">
+      <div>
+        <h1>Projects</h1>
+        <p class="muted small" id="proj-sub">Pick up any project where you left off, with its folders one click away.</p>
+      </div>
+      <div class="head-actions">
+        <input type="search" id="proj-search" placeholder="Search projects" aria-label="Search projects">
+        <button type="button" class="btn ghost" id="proj-import">Find my repos</button>
+        <button type="button" class="btn primary" id="proj-new">New project</button>
+      </div>
+    </div>
+    <div class="proj-filters" role="tablist" aria-label="Project status" id="proj-filters"></div>
+    <div id="proj-continue"></div>
+    <div id="proj-grid" class="proj-grid"></div>
+  </section>
+
+  <section id="view-apps" class="apps" hidden>
+    <div class="main-head">
+      <div>
+        <h1>Apps</h1>
+        <p class="muted small" id="apps-sub">Everything running on this computer that you can open.</p>
+      </div>
+      <div class="head-actions">
+        <button type="button" class="btn ghost" id="apps-refresh">Refresh</button>
+      </div>
+    </div>
+    <div id="apps-hero"></div>
+    <div id="apps-rows"></div>
+  </section>
+
+  <section id="view-services" class="services" hidden>
+    <div class="main-head">
+      <div>
+        <h1>Services</h1>
+        <p class="muted small" id="svc-sub">Docker containers and every program listening on this computer.</p>
+      </div>
+      <div class="head-actions">
+        <label class="check"><input type="checkbox" id="svc-system"> Show system services</label>
+        <button type="button" class="btn ghost" id="svc-refresh">Refresh</button>
+      </div>
+    </div>
+    <h2 class="section-h">Docker</h2>
+    <div id="svc-docker" class="svc-docker"></div>
+    <h2 class="section-h">Listening ports</h2>
+    <div id="svc-ports" class="svc-ports"></div>
+  </section>
+
+  <footer class="appfoot">
+    <a class="lockup lockup-sm" href="https://rangerone.io" target="_blank" rel="noopener noreferrer" title="Ranger One">
+      <div class="r1" data-size="sm" aria-hidden="true"></div>
+      <div class="lockup-divider"></div>
+      <div><div class="wordmark">Ranger One</div><div class="wordmark-sub">Agency infrastructure</div></div>
+    </a>
+    <p class="appfoot-info" id="appfoot"></p>
+    <nav class="brand-links" aria-label="Ranger One">
+      <a href="https://rangerone.io" target="_blank" rel="noopener noreferrer">rangerone.io</a>
+      <a href="mailto:support@rangerone.io">Support</a>
+      <a href="https://github.com/RangerOneSpace/keyvault" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://github.com/RangerOneSpace/keyvault/issues" target="_blank" rel="noopener noreferrer">Report an issue</a>
+    </nav>
+  </footer>
+</div>
+
+<!-- Add / edit key -->
+<dialog id="dlg-key" aria-labelledby="key-title">
+  <form id="key-form" novalidate autocomplete="off">
+    <div class="dlg-head"><h2 id="key-title">Add key</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="dlg-body">
+      <div class="row2">
+        <label class="field"><span>Name</span><input type="text" id="f-name" maxlength="120" placeholder="e.g. Anthropic, production"></label>
+        <label class="field"><span>Organisation</span><select id="f-org"></select></label>
+      </div>
+      <div class="row2">
+        <label class="field"><span>Provider</span><input type="text" id="f-provider" list="providers" maxlength="80" placeholder="e.g. Anthropic, OpenAI"></label>
+        <label class="field"><span>Type</span><select id="f-type"></select></label>
+      </div>
+      <label class="field">
+        <span>Key</span>
+        <div class="with-btn"><input type="password" id="f-value" autocomplete="off" spellcheck="false" placeholder="Paste the full key"><button type="button" class="btn ghost sm" id="f-value-toggle">Show</button></div>
+        <small class="hint" id="f-value-hint" hidden>Leave blank to keep the current key. Paste a new one to record a rotation.</small>
+      </label>
+      <div class="row2">
+        <label class="field"><span>Environment variable name</span><input type="text" id="f-envvar" maxlength="80" spellcheck="false" placeholder="e.g. ANTHROPIC_API_KEY"><small class="hint">What AI tools and Docker call this key.</small></label>
+        <label class="field"><span>Expires or rotate by <em>(optional)</em></span><input type="date" id="f-expires"></label>
+      </div>
+      <div class="row2">
+        <label class="field"><span>Environment</span><select id="f-env"></select></label>
+        <label class="field"><span>Status</span><select id="f-status"></select></label>
+      </div>
+      <label class="field"><span>Notes <em>(optional)</em></span><textarea id="f-notes" rows="3" maxlength="4000" placeholder="Where it's used, limits, who owns it"></textarea></label>
+      <p id="key-err" class="err" role="alert" hidden></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary" id="key-save">Save key</button></div>
+  </form>
+</dialog>
+<datalist id="providers"></datalist>
+
+<!-- Organisations -->
+<dialog id="dlg-orgs" aria-labelledby="orgs-title">
+  <div class="dlg-head"><h2 id="orgs-title">Organisations</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body">
+    <ul id="org-edit" class="org-edit"></ul>
+    <form id="org-add" class="with-btn" novalidate><input type="text" id="org-new" maxlength="60" placeholder="New organisation name"><button type="submit" class="btn primary sm">Add</button></form>
+  </div>
+  <div class="dlg-foot"><button type="button" class="btn primary" data-close>Done</button></div>
+</dialog>
+
+<!-- Settings -->
+<dialog id="dlg-settings" aria-labelledby="settings-title" class="wide">
+  <div class="dlg-head"><h2 id="settings-title">Settings</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body">
+    <section class="set">
+      <h3>About</h3>
+      <div class="about">
+        <div class="r1" data-size="md" aria-hidden="true"></div>
+        <div>
+          <p><strong>KeyVault</strong> <span class="mono muted small" id="s-version"></span></p>
+          <p class="muted small">A Ranger One product. Free and open source under the MIT licence.</p>
+        </div>
+      </div>
+      <div class="about-links">
+        <a class="btn ghost sm" href="https://rangerone.io" target="_blank" rel="noopener noreferrer">rangerone.io</a>
+        <a class="btn ghost sm" href="mailto:support@rangerone.io">support@rangerone.io</a>
+        <a class="btn ghost sm" href="https://github.com/RangerOneSpace/keyvault" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+        <a class="btn ghost sm" href="https://github.com/RangerOneSpace/keyvault/releases/latest" target="_blank" rel="noopener noreferrer">Check for updates</a>
+      </div>
+    </section>
+    <section class="set">
+      <h3>Auto-lock</h3>
+      <label class="field inline"><span>Lock after</span>
+        <select id="s-autolock"><option value="1">1 minute</option><option value="5">5 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="120">2 hours</option><option value="240">4 hours</option><option value="480">8 hours</option><option value="720">12 hours</option><option value="1440">24 hours</option></select>
+        <span class="muted small">without activity in KeyVault. AI tool use does not keep it unlocked. Stopping KeyVault or restarting the computer always locks it.</span>
+      </label>
+    </section>
+    <section class="set">
+      <h3>Backups</h3>
+      <p class="muted small" id="s-backup-note"></p>
+      <div class="btn-row">
+        <button type="button" class="btn primary" id="s-backup">Download encrypted backup</button>
+        <button type="button" class="btn ghost" id="s-restore">Restore from backup</button>
+        <button type="button" class="btn ghost" id="s-csv">Export inventory (CSV, no keys)</button>
+      </div>
+      <p class="muted small">Backups are encrypted with your master password, so they are safe to keep in OneDrive, Google Drive or on a USB stick.</p>
+    </section>
+    <section class="set">
+      <h3>Change master password</h3>
+      <form id="s-pw-form" class="grid-form" novalidate autocomplete="off">
+        <label class="field"><span>Current password</span><input type="password" id="s-pw-cur" autocomplete="current-password"></label>
+        <label class="field"><span>New password</span><input type="password" id="s-pw-new" autocomplete="new-password"></label>
+        <label class="field"><span>Confirm new password</span><input type="password" id="s-pw-new2" autocomplete="new-password"></label>
+        <p id="s-pw-err" class="err" role="alert" hidden></p>
+        <div><button type="submit" class="btn ghost">Change password</button></div>
+      </form>
+    </section>
+    <section class="set" id="s-autostart-sec">
+      <h3>Start with your computer</h3>
+      <label class="check"><input type="checkbox" id="s-autostart"> Start KeyVault in the background when I sign in</label>
+      <p class="muted small" id="s-autostart-note">No more opening KeyVault.exe after a restart. It starts hidden; the vault stays locked until you unlock it here.</p>
+    </section>
+    <section class="set">
+      <h3>Running KeyVault</h3>
+      <p class="muted small">KeyVault runs quietly in the background and keeps working when you close its window. This browser stays signed in (the vault still needs your master password after it locks). Bookmark <span class="mono" id="s-url"></span> to come straight back.</p>
+      <div class="btn-row">
+        <button type="button" class="btn ghost" id="s-signout-others">Sign out other browsers</button>
+        <button type="button" class="btn ghost" id="s-stop">Stop KeyVault</button>
+      </div>
+    </section>
+    <section class="set">
+      <h3>Vault file</h3>
+      <p class="mono small break" id="s-path"></p>
+      <p class="muted small">A copy of the previous version is kept next to it as vault.previous.json.</p>
+    </section>
+    <section class="set danger-zone">
+      <h3>Delete vault</h3>
+      <p class="muted small">Moves the vault file aside (still encrypted) and starts fresh. Only do this if you have a backup or no longer need these keys.</p>
+      <button type="button" class="btn danger" id="s-delete">Delete this vault</button>
+    </section>
+  </div>
+</dialog>
+
+<!-- Connect AI -->
+<dialog id="dlg-connect" aria-labelledby="connect-title" class="wide">
+  <div class="dlg-head"><h2 id="connect-title">Connect your AI tools</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body">
+    <p>Connected tools can see your key <strong>names</strong> and <strong>use</strong> keys (write them to a .env file, or run a command with them), but they never see the key values. They can also see and manage your local services.</p>
+    <div id="connect-list" class="connect-list"></div>
+    <p class="muted small">ChatGPT in the browser can only connect to servers on the public internet, so it cannot reach a vault on your computer. That is deliberate: use Codex, Claude or another local MCP client instead.</p>
+  </div>
+</dialog>
+
+<!-- Activity -->
+<dialog id="dlg-activity" aria-labelledby="activity-title" class="wide">
+  <div class="dlg-head"><h2 id="activity-title">Activity</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body"><p class="muted small">Every time an AI tool used a key or changed a service. Stored inside your encrypted vault.</p><ul id="activity-list" class="activity"></ul></div>
+</dialog>
+
+<!-- Container logs -->
+<dialog id="dlg-logs" aria-labelledby="logs-title" class="wide">
+  <div class="dlg-head"><h2 id="logs-title">Logs</h2><div class="btn-row"><select id="logs-tail" aria-label="Lines"><option value="200">Last 200 lines</option><option value="1000">Last 1000 lines</option></select><button type="button" class="btn ghost sm" id="logs-refresh">Refresh</button><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div></div>
+  <div class="dlg-body"><pre id="logs-out" class="logs"></pre></div>
+</dialog>
+
+<!-- Link keys to a compose project -->
+<dialog id="dlg-links" aria-labelledby="links-title" class="wide">
+  <form id="links-form" novalidate>
+    <div class="dlg-head"><h2 id="links-title">Keys for project</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="dlg-body">
+      <p class="muted small">When you press <strong>Up with keys</strong>, KeyVault runs <code>docker compose up -d</code> with these keys set as environment variables, so the compose file can use them as <code>${ANTHROPIC_API_KEY}</code>. No .env file is written.</p>
+      <div id="links-rows" class="links-rows"></div>
+      <button type="button" class="btn ghost sm" id="links-add">Add another key</button>
+      <p id="links-err" class="err" role="alert" hidden></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+
+<!-- Command output -->
+<dialog id="dlg-output" aria-labelledby="output-title" class="wide">
+  <div class="dlg-head"><h2 id="output-title">Output</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body"><p id="output-status" class="small"></p><pre id="output-text" class="logs"></pre></div>
+  <div class="dlg-foot"><button type="button" class="btn primary" data-close>Close</button></div>
+</dialog>
+
+<!-- Confirm -->
+<!-- New project -->
+<dialog id="dlg-proj-new" aria-labelledby="pn-title">
+  <form id="pn-form" novalidate autocomplete="off">
+    <div class="dlg-head"><h2 id="pn-title">New project</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="dlg-body">
+      <label class="field"><span>Name</span><input type="text" id="pn-name" maxlength="120" placeholder="e.g. Ranger One website"></label>
+      <label class="field"><span>Project folder <em>(optional, you can add more later)</em></span>
+        <div class="with-btn"><input type="text" id="pn-folder" spellcheck="false" placeholder="C:\Users\you\code\my-project"><button type="button" class="btn ghost sm" id="pn-browse">Browse…</button></div>
+      </label>
+      <div class="row2">
+        <label class="field"><span>Organisation</span><select id="pn-org"></select></label>
+        <label class="field"><span>Status</span><select id="pn-status"><option value="active">Active</option><option value="paused">Paused</option><option value="done">Done</option></select></label>
+      </div>
+      <label class="field"><span>What is it? <em>(optional)</em></span><textarea id="pn-summary" rows="2" maxlength="4000" placeholder="One or two sentences, for you and your AI tools"></textarea></label>
+      <p id="pn-err" class="err" role="alert" hidden></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary">Create project</button></div>
+  </form>
+</dialog>
+
+<!-- Project -->
+<dialog id="dlg-project" aria-labelledby="pd-name" class="xwide">
+  <div class="dlg-head pd-head">
+    <input type="text" id="pd-name" class="pd-name" maxlength="120" aria-label="Project name (type to rename)" spellcheck="false">
+    <span class="pd-saved muted small" id="pd-saved" aria-live="polite"></span>
+    <button type="button" class="icon-btn" data-close aria-label="Close">✕</button>
+  </div>
+  <div class="dlg-body pd-body">
+    <div class="pd-meta">
+      <label class="field inline"><span>Status</span><select id="pd-status"><option value="active">Active</option><option value="paused">Paused</option><option value="done">Done</option><option value="archived">Archived</option></select></label>
+      <label class="field inline"><span>Organisation</span><select id="pd-org"></select></label>
+      <label class="check"><input type="checkbox" id="pd-pin"> Pin to top</label>
+      <div class="spacer"></div>
+      <button type="button" class="btn ghost sm" id="pd-brief" title="Copies a summary any AI chat can use to pick this up">Copy brief for any AI</button>
+    </div>
+    <div class="pd-tabs" role="tablist" aria-label="Project sections">
+      <button type="button" role="tab" class="pd-tab" id="pd-tab-checklist" data-tab="checklist" aria-controls="pd-pane-checklist">Checklist <span class="count" id="pd-cl-tabcount"></span></button>
+      <button type="button" role="tab" class="pd-tab" id="pd-tab-overview" data-tab="overview" aria-controls="pd-pane-overview">Overview</button>
+    </div>
+    <div class="pd-pane" id="pd-pane-checklist" role="tabpanel" aria-labelledby="pd-tab-checklist">
+      <div class="cl-head">
+        <div class="cl-progress">
+          <div class="cl-big"><b id="pd-cl-done">0</b><span> / </span><span id="pd-cl-total">0</span><small> done</small></div>
+          <div class="cl-bar" aria-hidden="true"><i id="pd-cl-bar"></i></div>
+        </div>
+        <label class="field inline cl-key" title="Starts every item id, like RO-FOUND-001"><span>ID prefix</span><input type="text" id="pd-key" maxlength="6" spellcheck="false" autocomplete="off"></label>
+      </div>
+      <div class="cl-stats" id="pd-cl-stats"></div>
+      <div class="cl-tools">
+        <input type="search" id="pd-cl-search" placeholder="Search items, ids, owners, notes" aria-label="Search the checklist" autocomplete="off">
+        <div class="cl-phases" id="pd-cl-phases" role="group" aria-label="Filter by phase"></div>
+      </div>
+      <div id="pd-cl-list" class="cl-list"></div>
+      <div class="cl-add">
+        <form id="pd-cl-phase-add" class="cl-phase-add" novalidate>
+          <input type="text" id="pd-cl-phase-name" maxlength="80" placeholder="New phase, e.g. Phase 1: core app" aria-label="New phase name">
+          <input type="text" id="pd-cl-phase-code" maxlength="8" placeholder="CODE" aria-label="Phase code (optional)" spellcheck="false" class="mono">
+          <button type="submit" class="btn ghost sm">Add phase</button>
+        </form>
+        <button type="button" class="btn ghost sm" id="pd-cl-paste-btn" aria-expanded="false">Paste a list…</button>
+      </div>
+      <form id="pd-cl-paste" class="cl-paste" hidden novalidate>
+        <p class="muted small">One item per line. A line ending in a colon, or starting with #, starts a new phase. Lines starting with [x] are added as done. Indent a line to make it a subtask of the line above.</p>
+        <textarea id="pd-cl-paste-text" rows="8" placeholder="Foundations:&#10;Register the domain&#10;[x] Pick the brand font&#10;# Phase 1: website&#10;Build the landing page&#10;  Write the hero copy&#10;  Add the contact form"></textarea>
+        <div class="btn-row"><button type="submit" class="btn primary sm">Add to checklist</button><button type="button" class="btn ghost sm" id="pd-cl-paste-cancel">Cancel</button></div>
+      </form>
+      <datalist id="cl-owners"><option value="human"><option value="claude"><option value="human+claude"><option value="codex"><option value="cursor"></datalist>
+    </div>
+    <div class="pd-pane" id="pd-pane-overview" role="tabpanel" aria-labelledby="pd-tab-overview">
+      <div class="pd-cols">
+      <div class="pd-col">
+        <section class="pd-sec pd-resume">
+          <h3>Where I left off</h3>
+          <textarea id="pd-resume" rows="5" maxlength="8000" placeholder="What were you in the middle of? What was the last thing that worked, and what is broken?"></textarea>
+        </section>
+        <section class="pd-sec">
+          <h3>What is it?</h3>
+          <textarea id="pd-summary" rows="3" maxlength="4000" placeholder="One or two sentences, for you and your AI tools"></textarea>
+        </section>
+        <section class="pd-sec">
+          <h3>Activity</h3>
+          <form id="pd-log-add" class="with-btn" novalidate><input type="text" id="pd-log-new" maxlength="2000" placeholder="What did you just do?"><button type="submit" class="btn ghost sm">Log it</button></form>
+          <ul id="pd-log" class="pd-log"></ul>
+        </section>
+      </div>
+      <div class="pd-col">
+        <section class="pd-sec">
+          <h3>Folders</h3>
+          <ul id="pd-folders" class="pd-folders"></ul>
+          <form id="pd-folder-add" class="with-btn" novalidate><input type="text" id="pd-folder-new" spellcheck="false" placeholder="Paste a folder path"><button type="button" class="btn ghost sm" id="pd-browse">Browse…</button><button type="button" class="btn ghost sm" id="pd-github">GitHub…</button><button type="submit" class="btn ghost sm">Add</button></form>
+        </section>
+        <section class="pd-sec">
+          <h3>Links</h3>
+          <ul id="pd-links" class="pd-links"></ul>
+          <form id="pd-link-add" class="pd-link-add" novalidate><input type="text" id="pd-link-label" maxlength="60" placeholder="Label (e.g. Live site)"><input type="url" id="pd-link-url" maxlength="500" placeholder="https://"><button type="submit" class="btn ghost sm">Add</button></form>
+        </section>
+        <section class="pd-sec">
+          <h3>Keys this project uses</h3>
+          <p class="muted small">Your AI tools see these names (never the values) when they resume the project.</p>
+          <div id="pd-keys" class="pd-keys"></div>
+        </section>
+        <section class="pd-sec pd-ai">
+          <h3>Resume with AI</h3>
+          <p class="small">In Claude, Codex, Cursor or LM Studio (connected through <b>Connect AI</b>) just say:</p>
+          <pre class="code" id="pd-ai-say"></pre>
+          <p class="muted small">It reads where you left off and the open checklist items, works in these folders, ticks items off as it finishes them and logs progress here. No checklist yet? Say <b>Write a build checklist for this project in KeyVault</b>. For ChatGPT in the browser, use <b>Copy brief for any AI</b> and paste it in.</p>
+        </section>
+      </div>
+    </div>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <button type="button" class="btn danger" id="pd-delete">Delete</button>
+    <button type="button" class="btn ghost" id="pd-archive">Archive</button>
+    <button type="button" class="btn ghost" id="pd-duplicate">Duplicate</button>
+    <div class="spacer"></div>
+    <button type="button" class="btn primary" data-close>Done</button>
+  </div>
+</dialog>
+
+<!-- Agent pass -->
+<dialog id="dlg-pass" aria-labelledby="pass-title">
+  <form id="pass-form" novalidate>
+    <div class="dlg-head"><h2 id="pass-title">Agent pass</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="dlg-body pass-body">
+      <p>Keep KeyVault available to your AI tools while you are away, for an overnight run or a long job.</p>
+      <ul class="pass-points small">
+        <li>This page still locks after <b id="pass-autolock">30 minutes</b> without activity. Opening it again needs your master password.</li>
+        <li>Your AI tools keep working until the time you choose. Then KeyVault locks completely.</li>
+        <li>Everything they do is in <b>Activity</b>. <b>Lock</b> ends the pass at once.</li>
+        <li>Restarting the computer ends the pass too.</li>
+      </ul>
+      <div id="pass-active" class="pass-active" hidden>
+        <p><b class="pass-dot" aria-hidden="true"></b><span id="pass-active-text"></span></p>
+        <button type="button" class="btn ghost sm glow-stop" id="pass-end">End pass now</button>
+      </div>
+      <div class="pass-grid">
+        <label class="field"><span>Until</span><input type="time" id="pass-time" value="07:00" required></label>
+        <label class="field"><span>Your AI tools can use</span><select id="pass-scope"></select></label>
+      </div>
+      <p class="muted small" id="pass-when" aria-live="polite"></p>
+      <p id="pass-err" class="err" role="alert" hidden></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary" id="pass-go">Start agent pass</button></div>
+  </form>
+</dialog>
+
+<!-- GitHub search -->
+<dialog id="dlg-github" aria-labelledby="gh-title" class="wide">
+  <div class="dlg-head"><h2 id="gh-title">Search GitHub</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body gh-body">
+    <form id="gh-form" class="gh-search" novalidate role="search">
+      <div class="seg" role="tablist" aria-label="Where to search">
+        <button type="button" role="tab" class="pf" id="gh-scope-mine" data-scope="mine">My repos</button>
+        <button type="button" role="tab" class="pf" id="gh-scope-all" data-scope="all">All of GitHub</button>
+      </div>
+      <input type="search" id="gh-q" placeholder="Repo name, owner or topic" aria-label="Search GitHub" autocomplete="off" spellcheck="false">
+      <button type="submit" class="btn primary sm">Search</button>
+    </form>
+    <p class="muted small" id="gh-note"></p>
+    <form id="gh-parent-form" class="gh-parent" novalidate>
+      <label class="field inline"><span>Clone into</span><input type="text" id="gh-parent" spellcheck="false" placeholder="Folder for new clones, e.g. C:\Users\you\code"></label>
+      <button type="button" class="btn ghost sm" id="gh-browse">Browse…</button>
+    </form>
+    <p class="muted small" id="gh-count" aria-live="polite"></p>
+    <ul id="gh-list" class="gh-list"></ul>
+  </div>
+  <div class="dlg-foot"><span class="muted small" id="gh-mode"></span><div class="spacer"></div><button type="button" class="btn ghost" data-close>Close</button></div>
+</dialog>
+
+<!-- Find repos -->
+<dialog id="dlg-proj-import" aria-labelledby="pi-title" class="wide">
+  <div class="dlg-head"><h2 id="pi-title">Find my repos</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body">
+    <p class="muted small" id="pi-roots"></p>
+    <form id="pi-root-form" class="with-btn" novalidate><input type="text" id="pi-root" spellcheck="false" placeholder="Also look in another folder (full path)"><button type="button" class="btn ghost sm" id="pi-browse">Browse…</button><button type="submit" class="btn ghost sm">Look there</button></form>
+    <div class="pi-tools"><label class="check"><input type="checkbox" id="pi-all"> Select all</label><span class="muted small" id="pi-count"></span><div class="spacer"></div><button type="button" class="btn ghost sm" id="pi-github">Search GitHub…</button></div>
+    <ul id="pi-list" class="pi-list"></ul>
+  </div>
+  <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" id="pi-add">Add selected</button></div>
+</dialog>
+
+<dialog id="dlg-confirm" aria-labelledby="confirm-title" class="narrow">
+  <form id="confirm-form" novalidate>
+    <div class="dlg-head"><h2 id="confirm-title">Are you sure?</h2></div>
+    <div class="dlg-body">
+      <p id="confirm-body"></p>
+      <label class="field" id="confirm-input-wrap" hidden><span id="confirm-input-label"></span><input type="text" id="confirm-input" autocomplete="off"></label>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" id="confirm-cancel">Cancel</button><button type="submit" class="btn primary" id="confirm-ok">Confirm</button></div>
+  </form>
+</dialog>
+
+<input type="file" id="file-restore" accept=".json,application/json" hidden>
+<div id="toast" class="toast" popover="manual" role="status" aria-live="polite"></div>
+</body>
+</html>
