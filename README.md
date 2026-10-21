@@ -30,6 +30,7 @@ LLM providers show you an API key once. After that it lives wherever you pasted 
 |---|---|
 | 🔑 **Keys, organised** | Every key with its organisation, provider, environment, status, expiry date and notes. Search, filter, reveal for 20 seconds, copy (the clipboard clears itself after 30). |
 | 🤖 **AI uses keys, never sees them** | Through the [Model Context Protocol](https://modelcontextprotocol.io), your assistant sees key *names* and asks KeyVault to write a `.env` or run a command with them. The values never enter the conversation. |
+| 🧪 **Package name checks** | Your AI can check a proposed dependency against a pinned [slopsquatting reference](data/README.md) and the official PyPI or npm registry before using it. A dataset match blocks the exact name; a registry listing does not mean the package is safe. |
 | 🗂️ **Projects** | Every project with its folders, where you left off and what's next. Resume in one click, in Explorer, VS Code, Cursor or a terminal, or ask your AI to pick it up. |
 | 🎬 **Apps** | Everything you have running, as cards you can open, stop or restart. Your dev servers and containers, with their own icons. |
 | 🐳 **Services** | Docker containers by compose project, and every program on a localhost port. Start a compose project with keys injected straight from the vault, with no `.env` on disk. |
