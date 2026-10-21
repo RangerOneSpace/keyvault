@@ -24,13 +24,15 @@
 
 LLM providers show you an API key once. After that it lives wherever you pasted it: a notes app, a Slack message, five different `.env` files. Run a few companies or clients and you soon lose track of which key belongs to whom, which are still live, and which should have been rotated months ago. KeyVault fixes that, and keeps the keys out of your AI's chat logs while you're at it.
 
+**New for coders: Slop Checker.** Before adding a dependency, your AI can ask KeyVault to check its exact name. Python names are checked against [Trend Micro's slopsquatting dataset](https://github.com/trendmicro/slopsquatting) and PyPI; npm names are checked against the npm registry. A dataset match blocks the name. Registry presence alone does not establish that a package is safe. [See the `verify_package` tool below](#what-your-ai-can-do).
+
 <p align="center"><img src="docs/keys.png" alt="The Keys view: every key with its organisation, provider, environment and status" width="100%"></p>
 
 | | |
 |---|---|
 | 🔑 **Keys, organised** | Every key with its organisation, provider, environment, status, expiry date and notes. Search, filter, reveal for 20 seconds, copy (the clipboard clears itself after 30). |
 | 🤖 **AI uses keys, never sees them** | Through the [Model Context Protocol](https://modelcontextprotocol.io), your assistant sees key *names* and asks KeyVault to write a `.env` or run a command with them. The values never enter the conversation. |
-| 🧪 **Package name checks** | Your AI can check a proposed dependency against a pinned [slopsquatting reference](data/README.md) and the official PyPI or npm registry before using it. A dataset match blocks the exact name; a registry listing does not mean the package is safe. |
+| 🧪 **Slop Checker** | Check proposed package names before your AI adds them, using a pinned [Trend Micro reference](data/README.md) and the official PyPI or npm registry. A registry listing is not a safety approval. |
 | 🗂️ **Projects** | Every project with its folders, where you left off and what's next. Resume in one click, in Explorer, VS Code, Cursor or a terminal, or ask your AI to pick it up. |
 | 🎬 **Apps** | Everything you have running, as cards you can open, stop or restart. Your dev servers and containers, with their own icons. |
 | 🐳 **Services** | Docker containers by compose project, and every program on a localhost port. Start a compose project with keys injected straight from the vault, with no `.env` on disk. |
